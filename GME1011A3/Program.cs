@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using HeroInheritance;
 
 namespace GME1011A3
 {
@@ -6,33 +7,46 @@ namespace GME1011A3
     {
         static void Main(string[] args)
         {
+            Console.ForegroundColor = ConsoleColor.White;
 
             //Epic battle goes here :)
             Random rng = new Random();
 
-            Fighter hero = new Fighter(100, "Aaron", 5); //TODO: Get these arguments from the user - health, name, strength
+            Console.Write("How much health does your hero have?... : ");
+            int heroHealth = int.Parse(Console.ReadLine()); // Get hero health from the user
+
+            Console.Write("What is your hero's name?... : ");
+            string heroName = Console.ReadLine(); // Get hero name from the user
+
+            Console.Write("What is your hero's strength?... : ");
+            int heroStrength = int.Parse(Console.ReadLine()); // Get hero strength from the user
+
+            Fighter hero = new Fighter(heroHealth, heroName, heroStrength); //TODO: Get these arguments from the user - health, name, strength
             Console.WriteLine("Here is our heroic hero: " + hero + "\n\n");
+            int specialChance = 100; //the chances of using a special
 
-
-            int numBaddies = 5; //TODO: Get number of baddies from the user
+            Console.Write("How many baddies are there... : ");
+            int numBaddies = int.Parse(Console.ReadLine()); // Get number of baddies from the user
             int numAliveBaddies = numBaddies;
+            int baddieChance = 3; // the admount of types of minion's incase i add a ROBOT later
+            int typeBaddie = 1; 
 
 
             //TODO: change this so that it can contain goblins and skellies! Just change the type of the list!!
-            List<Goblin> baddies = new List<Goblin>();
-
-
+            List<Minion> baddies = new List<Minion>();
 
             for (int i = 0; i < numBaddies; i++)
             {
-
-
                 //TODO: each baddie should have 50% chance of being a goblin, 50% chance of
                 //being a skellie. A skellie should have random health between 25 and 30, and 0 armour (remember
                 //skellie armour is 0 anyway)
-                baddies.Add(new Goblin(rng.Next(30, 35), rng.Next(1, 5), rng.Next(1, 10)));
-            
-            
+                typeBaddie = rng.Next(1, baddieChance+1);
+                if (typeBaddie == 1)
+                    baddies.Add(new Goblin(rng.Next(30, 35), rng.Next(1, 5), rng.Next(1, 10)));
+                if (typeBaddie == 2)
+                    baddies.Add(new Skellie(rng.Next(25, 31), 0));
+                if (typeBaddie == 3)
+                    baddies.Add(new Robot(rng.Next(20, 25), rng.Next(1, 5))); //if you add a robot, this is how you do it
             }
 
             //this should work even after you make the changes above
@@ -58,12 +72,31 @@ namespace GME1011A3
 
                 //hero deals damage first
                 Console.WriteLine(hero.GetName() + " is attacking enemy #" + (indexOfEnemy+1) + " of " + numBaddies + ". Eek, it's a " + baddies[indexOfEnemy].GetType().Name);
-                int heroDamage = hero.DealDamage();  //how much damage?
-                Console.WriteLine("Hero deals " + heroDamage + " heroic damage."); 
-                baddies[indexOfEnemy].TakeDamage(heroDamage); //baddie takes the damage
 
+                specialChance = rng.Next(1, 101);
+                int heroDamage = hero.DealDamage();             //how much damage?
+                int heroSpecial = hero.DealDamage() + 1;        //special if no type found
 
+                if (hero.GetType()==typeof(Fighter)) // Check for type of hero
+                    heroSpecial = ((Fighter)hero).Berserk(); //if the hero is a fighter, use their special attack
 
+                if (specialChance <= 67)
+                {
+                    Console.WriteLine("Hero deals " + heroDamage + " heroic damage.");
+                    baddies[indexOfEnemy].TakeDamage(heroDamage);
+                } //baddie takes the damage 
+
+                else if (heroSpecial == 0)
+                {
+                    Console.WriteLine("unable to use special hero deals " + heroDamage + " heroic damage.");
+                    baddies[indexOfEnemy].TakeDamage(heroDamage);
+                } //baddie takes the damage 
+
+                else
+                {
+                    Console.WriteLine("Hero is using their special attack! it deals " + heroSpecial); //hero uses their special attack
+                    baddies[indexOfEnemy].TakeDamage(heroSpecial);
+                }
 
                 //TODO: The hero doesn't ever use their special attack - but they should. Change the above to 
                 //have a 33% chance that the hero uses their special, and 67% that they use their regular attack.
@@ -86,15 +119,33 @@ namespace GME1011A3
                 else //baddie survived, now attacks the hero
                 {
                     int baddieDamage = baddies[indexOfEnemy].DealDamage();  //how much damage?
-                    Console.WriteLine("Enemy #" + (indexOfEnemy+1) + " deals " + baddieDamage + " damage!");
-                    hero.TakeDamage(baddieDamage); //hero takes damage
+                    int baddieSpecial = baddies[indexOfEnemy].DealDamage() + 1; //special if no type found
 
+                    if (baddies[indexOfEnemy].GetType() == typeof(Goblin)) // Check for type of baddie
+                        baddieSpecial = ((Goblin)baddies[indexOfEnemy]).GoblinBite(); //if the baddie is a goblin, use their special attack
 
+                    if (baddies[indexOfEnemy].GetType() == typeof(Skellie)) // Check for type of baddie
+                        baddieSpecial = ((Skellie)baddies[indexOfEnemy]).SkellieRattle(); //if the baddie is a skellie, use their special attack
 
+                    if (baddies[indexOfEnemy].GetType() == typeof(Robot)) // Check for type of baddie
+                        baddieSpecial = ((Robot)baddies[indexOfEnemy]).RoboBlast(); //if the baddie is a robot, use their special attack
+
+                    specialChance = rng.Next(1, 101); //chance of special attack
+                    if (specialChance <= 67) 
+                    {
+                        Console.WriteLine("Enemy #" + (indexOfEnemy + 1) + " deals " + baddieDamage + " damage!");
+                        hero.TakeDamage(baddieDamage); 
+                    } //hero takes damage
+
+                    else
+                    {
+                        Console.WriteLine("Enemy #" + (indexOfEnemy +1) + " is going in for a Devastating blow and deals " + baddieSpecial + " damage!");
+                        hero.TakeDamage(baddieSpecial);
+                    } //hero takes damage
 
                     //TODO: The baddie doesn't ever use their special attack - but they should. Change the above to 
                     //have a 33% chance that the baddie uses their special, and 67% that they use their regular attack.
-                    
+
 
 
 
